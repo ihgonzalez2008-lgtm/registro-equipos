@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang='es'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Registro de equipos</title>
+<style>
+body{margin:0;font-family:sans-serif;text-align:center;background:#222;color:#fff}
+#estado{padding:16px;font-size:1.6rem;background:#444}
+#lector{max-width:500px;margin:auto}
+</style></head><body>
+<div id='estado'>Acerca tu código a la cámara</div>
+<div id='lector'></div>
+<script src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'></script>
+<script>
+const URL_SCRIPT = 'e.com/a/macros/canariaseducacion.es/s/AKfycbw1mJwyzquwHGr2JPUdV8CrJp-p210IyMW-wt4dYgvzPn4tj97GqR4UDbT26mHXAW4W/exec';
+const CLAVE = 'digitalización-2026-xk9';
+const equipo = new URLSearchParams(location.search).get('equipo') || 'SIN-EQUIPO';
+const estado = document.getElementById('estado');
+let bloqueado = false;
+
+function mostrar(texto, color) {
+  estado.textContent = texto;
+  estado.style.background = color;
+  setTimeout(function () {
+    estado.textContent = 'Acerca tu código a la cámara';
+    estado.style.background = '#444';
+    bloqueado = false;
+  }, 2500);
+}
+
+async function alLeer(codigo) {
+  if (bloqueado) return;
+  bloqueado = true;
+  try {
+    const r = await fetch(URL_SCRIPT + '?codigo=' + encodeURIComponent(codigo) +
+      '&equipo=' + encodeURIComponent(equipo) + '&clave=' + encodeURIComponent(CLAVE));
+    const d = await r.json();
+    if (d.resultado === 'ok') mostrar('✔ Registrado: ' + codigo + ' en ' + equipo, '#1b7f3b');
+    else if (d.resultado === 'desconocido') mostrar('✖ Código no reconocido', '#b3261e');
+    else mostrar('✖ Error de registro', '#b3261e');
+  } catch (err) {
+    mostrar('✖ Sin conexión: vuelve a intentarlo', '#b3261e');
+  }
+}
+
+new Html5Qrcode('lector').start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, alLeer);
+</script></body></html>
